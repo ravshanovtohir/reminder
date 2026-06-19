@@ -1,0 +1,27 @@
+{
+  "name": "telegram-reminder-bot",
+  "version": "1.0.0",
+  "description": "Small Telegram reminder bot with PostgreSQL subscribers and fixed daily schedules.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "check": "node --check src/*.js",
+    "prisma:generate": "prisma generate",
+    "migrate": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "node-cron": "^4.4.1",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "prisma": "^6.10.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
