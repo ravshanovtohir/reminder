@@ -1,6 +1,6 @@
 const { Telegraf } = require('telegraf');
 const { messages } = require('./messages');
-const { getScheduleSummary, sendChannelReminder } = require('./scheduler');
+const { getScheduleSummary, getSchedulerDebugSummary, sendChannelReminder } = require('./scheduler');
 const { upsertSubscriber } = require('./db');
 
 function formatUser(ctx) {
@@ -79,6 +79,15 @@ function createBot(config) {
     }
 
     await ctx.reply(getScheduleSummary(config));
+  });
+
+  bot.command('debug', async (ctx) => {
+    if (!isAdmin(ctx.from.id, config.adminIds)) {
+      await ctx.reply('Эта команда доступна только администратору.');
+      return;
+    }
+
+    await ctx.reply(getSchedulerDebugSummary(config));
   });
 
   bot.catch((error, ctx) => {

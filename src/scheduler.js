@@ -2,6 +2,19 @@ const { messages } = require('./messages');
 
 const CHECK_INTERVAL_MS = 30 * 1000;
 
+const schedulerState = {
+  isStarted: false,
+  startedAt: null,
+  checkCount: 0,
+  sentCount: 0,
+  lastCheckedAt: null,
+  lastZonedTime: null,
+  lastDueCount: 0,
+  lastSentAt: null,
+  lastSentText: null,
+  lastError: null
+};
+
 function buildSchedules(startTime, intervalHours) {
   const startMinutes = startTime.hour * 60 + startTime.minute;
   const intervalMinutes = intervalHours * 60;
@@ -83,6 +96,24 @@ function getScheduleSummary(config) {
   ].join('\n');
 }
 
+function getSchedulerDebugSummary(config) {
+  return [
+    'Scheduler debug',
+    `Started: ${schedulerState.isStarted ? 'yes' : 'no'}`,
+    `Started at: ${schedulerState.startedAt ? schedulerState.startedAt.toISOString() : '-'}`,
+    `Check count: ${schedulerState.checkCount}`,
+    `Last checked at: ${schedulerState.lastCheckedAt ? schedulerState.lastCheckedAt.toISOString() : '-'}`,
+    `Last zoned time: ${schedulerState.lastZonedTime || '-'}`,
+    `Last due count: ${schedulerState.lastDueCount}`,
+    `Sent count: ${schedulerState.sentCount}`,
+    `Last sent at: ${schedulerState.lastSentAt ? schedulerState.lastSentAt.toISOString() : '-'}`,
+    `Last sent text: ${schedulerState.lastSentText || '-'}`,
+    `Last error: ${schedulerState.lastError || '-'}`,
+    '',
+    getScheduleSummary(config)
+  ].join('\n');
+}
+
 async function sendChannelReminder(bot, channelId, text) {
   await bot.telegram.sendMessage(channelId, text);
   console.log('Reminder sent to channel', { channelId, text });
@@ -93,6 +124,12 @@ async function runDueReminders(bot, config, schedules, sentKeys) {
   const dueSchedules = schedules.filter(
     (schedule) => schedule.hour === now.hour && schedule.minute === now.minute
   );
+
+  schedulerState.checkCount += 1;
+  schedulerState.lastCheckedAt = new Date();
+  schedulerState.lastZonedTime = `${formatTime(now.hour, now.minute)}:${String(now.second).padStart(2, '0')}`;
+  schedulerState.lastDueCount = dueSchedules.length;
+  schedulerState.lastError = null;
 
   for (const schedule of dueSchedules) {
     const key = getScheduleKey(now, schedule);
@@ -110,6 +147,9 @@ async function runDueReminders(bot, config, schedules, sentKeys) {
 
     await sendChannelReminder(bot, config.channelId, schedule.text);
     sentKeys.add(key);
+    schedulerState.sentCount += 1;
+    schedulerState.lastSentAt = new Date();
+    schedulerState.lastSentText = schedule.text;
   }
 }
 
@@ -119,9 +159,13 @@ function startReminderScheduler(bot, config) {
 
   const checkDueReminders = () => {
     runDueReminders(bot, config, schedules, sentKeys).catch((error) => {
+      schedulerState.lastError = error.message;
       console.error('Reminder scheduler check failed', error);
     });
   };
+
+  schedulerState.isStarted = true;
+  schedulerState.startedAt = new Date();
 
   console.log('Reminder scheduler started');
   for (const schedule of schedules) {
@@ -135,6 +179,7 @@ function startReminderScheduler(bot, config) {
 
 module.exports = {
   buildSchedules,
+  getSchedulerDebugSummary,
   getScheduleSummary,
   runDueReminders,
   sendChannelReminder,
