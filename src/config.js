@@ -50,7 +50,7 @@ const config = {
   botToken: required('BOT_TOKEN'),
   databaseUrl: required('DATABASE_URL'),
   channelId: required('TELEGRAM_CHANNEL_ID'),
-  port: Number(process.env.PORT || 3000),
+  port: Number(process.env.PORT || 3333),
   reminderTimezone: process.env.REMINDER_TIMEZONE || 'Asia/Samarkand',
   reminderStartTime: parseStartTime(process.env.REMINDER_START_TIME || '08:00'),
   reminderIntervalHours: parseIntervalHours(process.env.REMINDER_INTERVAL_HOURS || '1'),
