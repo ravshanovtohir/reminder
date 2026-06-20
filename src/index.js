@@ -13,8 +13,15 @@ async function main() {
 
   const bot = createBot(config);
   console.log('Launching Telegram bot');
-  await bot.launch();
-  console.log('Telegram bot launched');
+  bot.launch()
+    .then(() => {
+      console.log('Telegram bot launch promise resolved');
+    })
+    .catch((error) => {
+      console.error('Telegram bot failed to launch', error);
+      process.exit(1);
+    });
+  console.log('Telegram bot launch requested');
 
   startReminderScheduler(bot, config);
 
