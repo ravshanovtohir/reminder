@@ -5,10 +5,16 @@ const { startReminderScheduler } = require('./scheduler');
 const { createServer } = require('./server');
 
 async function main() {
+  console.log('Application starting');
+
+  console.log('Connecting to database');
   await initDb();
+  console.log('Database connected');
 
   const bot = createBot(config);
+  console.log('Launching Telegram bot');
   await bot.launch();
+  console.log('Telegram bot launched');
 
   startReminderScheduler(bot, config);
 
