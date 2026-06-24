@@ -12,6 +12,9 @@ const schedulerState = {
   lastDueCount: 0,
   lastSentAt: null,
   lastSentText: null,
+  lastReactionAt: null,
+  lastReactionEmoji: null,
+  lastReactionError: null,
   lastError: null
 };
 
@@ -108,15 +111,53 @@ function getSchedulerDebugSummary(config) {
     `Sent count: ${schedulerState.sentCount}`,
     `Last sent at: ${schedulerState.lastSentAt ? schedulerState.lastSentAt.toISOString() : '-'}`,
     `Last sent text: ${schedulerState.lastSentText || '-'}`,
+    `Last reaction at: ${schedulerState.lastReactionAt ? schedulerState.lastReactionAt.toISOString() : '-'}`,
+    `Last reaction emoji: ${schedulerState.lastReactionEmoji || '-'}`,
+    `Last reaction error: ${schedulerState.lastReactionError || '-'}`,
     `Last error: ${schedulerState.lastError || '-'}`,
     '',
     getScheduleSummary(config)
   ].join('\n');
 }
 
-async function sendChannelReminder(bot, channelId, text) {
-  await bot.telegram.sendMessage(channelId, text);
+async function setMessageReaction(bot, channelId, messageId, reactionEmoji) {
+  if (!reactionEmoji) {
+    return;
+  }
+
+  try {
+    await bot.telegram.callApi('setMessageReaction', {
+      chat_id: channelId,
+      message_id: messageId,
+      reaction: [
+        {
+          type: 'emoji',
+          emoji: reactionEmoji
+        }
+      ],
+      is_big: false
+    });
+
+    schedulerState.lastReactionAt = new Date();
+    schedulerState.lastReactionEmoji = reactionEmoji;
+    schedulerState.lastReactionError = null;
+    console.log('Reaction set on channel message', { channelId, messageId, reactionEmoji });
+  } catch (error) {
+    schedulerState.lastReactionError = error.message;
+    console.warn('Failed to set reaction on channel message', {
+      channelId,
+      messageId,
+      reactionEmoji,
+      error: error.message
+    });
+  }
+}
+
+async function sendChannelReminder(bot, channelId, text, reactionEmoji = null) {
+  const message = await bot.telegram.sendMessage(channelId, text);
   console.log('Reminder sent to channel', { channelId, text });
+
+  await setMessageReaction(bot, channelId, message.message_id, reactionEmoji);
 }
 
 async function runDueReminders(bot, config, schedules, sentKeys) {
@@ -145,7 +186,7 @@ async function runDueReminders(bot, config, schedules, sentKeys) {
       schedule: schedule.index
     });
 
-    await sendChannelReminder(bot, config.channelId, schedule.text);
+    await sendChannelReminder(bot, config.channelId, schedule.text, config.reactionEmoji);
     sentKeys.add(key);
     schedulerState.sentCount += 1;
     schedulerState.lastSentAt = new Date();
@@ -183,5 +224,6 @@ module.exports = {
   getScheduleSummary,
   runDueReminders,
   sendChannelReminder,
+  setMessageReaction,
   startReminderScheduler
 };

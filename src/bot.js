@@ -68,7 +68,7 @@ function createBot(config) {
       return;
     }
 
-    await sendChannelReminder(bot, config.channelId, messages[0]);
+    await sendChannelReminder(bot, config.channelId, messages[0], config.reactionEmoji);
     await ctx.reply('Тестовое сообщение отправлено в канал.');
   });
 

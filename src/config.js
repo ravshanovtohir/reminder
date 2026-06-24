@@ -54,6 +54,7 @@ const config = {
   reminderTimezone: process.env.REMINDER_TIMEZONE || 'Asia/Samarkand',
   reminderStartTime: parseStartTime(process.env.REMINDER_START_TIME || '08:00'),
   reminderIntervalHours: parseIntervalHours(process.env.REMINDER_INTERVAL_HOURS || '1'),
+  reactionEmoji: process.env.TELEGRAM_REACTION_EMOJI || '❤',
   adminIds: parseAdminIds(process.env.TELEGRAM_ADMIN_IDS)
 };
 
