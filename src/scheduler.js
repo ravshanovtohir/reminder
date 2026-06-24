@@ -125,6 +125,8 @@ async function setMessageReaction(bot, channelId, messageId, reactionEmoji) {
     return;
   }
 
+  const apiReactionEmoji = reactionEmoji.replace(/\uFE0F/g, '');
+
   try {
     await bot.telegram.callApi('setMessageReaction', {
       chat_id: channelId,
@@ -132,7 +134,7 @@ async function setMessageReaction(bot, channelId, messageId, reactionEmoji) {
       reaction: [
         {
           type: 'emoji',
-          emoji: reactionEmoji
+          emoji: apiReactionEmoji
         }
       ],
       is_big: false
@@ -141,13 +143,14 @@ async function setMessageReaction(bot, channelId, messageId, reactionEmoji) {
     schedulerState.lastReactionAt = new Date();
     schedulerState.lastReactionEmoji = reactionEmoji;
     schedulerState.lastReactionError = null;
-    console.log('Reaction set on channel message', { channelId, messageId, reactionEmoji });
+    console.log('Reaction set on channel message', { channelId, messageId, reactionEmoji, apiReactionEmoji });
   } catch (error) {
     schedulerState.lastReactionError = error.message;
     console.warn('Failed to set reaction on channel message', {
       channelId,
       messageId,
       reactionEmoji,
+      apiReactionEmoji,
       error: error.message
     });
   }
